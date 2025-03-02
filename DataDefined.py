@@ -1,3 +1,7 @@
+#column_names not named in any of them: 
+# 'Time(s)'
+
+
 #Column names of all columns with only 1 value
 one_val_col = ['Filtered_Accelerator_Pedal_value', 'Inhibition_of_engine_fuel_cut_off', 'Fuel_Pressure', 
                'Torque_scaling_factor(standardization)', 'Glow_plug_control_request']
@@ -12,7 +16,7 @@ to_be_scaled_col = ['Fuel_consumption', 'Accelerator_Pedal_value', 'Throttle_pos
                     'Wheel_velocity_front_left-hand', 'Wheel_velocity_rear_right-hand', 'Wheel_velocity_front_right-hand', 
                     'Wheel_velocity_rear_left-hand', 'Torque_converter_turbine_speed_-_Unfiltered', 'Vehicle_speed', 
                     'Acceleration_speed_-_Longitudinal', 'Master_cylinder_pressure', 'Calculated_road_gradient', 
-                    'Acceleration_speed_-_Lateral', 'Steering_wheel_speed', 'Steering_wheel_angle', 'Time(s)']
+                    'Acceleration_speed_-_Lateral', 'Steering_wheel_speed', 'Steering_wheel_angle']
 
 #Column names of columns with exactly two distinct values
 two_val_col = ['Engine_in_fuel_cut_off', 'Standard_Torque_Ratio', 'Requested_spark_retard_angle_from_TCU', 

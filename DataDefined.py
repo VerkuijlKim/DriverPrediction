@@ -1,6 +1,7 @@
 #column_names not named in any of them: 
 # 'Time(s)'
-
+# 'Class'
+# 'PathOrder'
 
 #Column names of all columns with only 1 value
 one_val_col = ['Filtered_Accelerator_Pedal_value', 'Inhibition_of_engine_fuel_cut_off', 'Fuel_Pressure', 
@@ -21,7 +22,7 @@ to_be_scaled_col = ['Fuel_consumption', 'Accelerator_Pedal_value', 'Throttle_pos
 #Column names of columns with exactly two distinct values
 two_val_col = ['Engine_in_fuel_cut_off', 'Standard_Torque_Ratio', 'Requested_spark_retard_angle_from_TCU', 
                'Target_engine_speed_used_in_lock-up_module', 'Activation_of_Air_compressor', 
-               'Clutch_operation_acknowledge', 'PathOrder'] 
+               'Clutch_operation_acknowledge'] 
 
 #Column names of columns with only a couple distinct numbers (like up to 10)
 some_val_num_col = ['Engine_soacking_time', 'Long_Term_Fuel_Trim_Bank1', 'Minimum_indicated_engine_torque']

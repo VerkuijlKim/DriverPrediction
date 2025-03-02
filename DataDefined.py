@@ -1,13 +1,6 @@
-import pandas as pd 
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-
-
-df = pd.read_csv('Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv')
-
-# Dropping the columns with only one value
+#Column names of all columns with only 1 value
 one_val_col = ['Filtered_Accelerator_Pedal_value', 'Inhibition_of_engine_fuel_cut_off', 'Fuel_Pressure', 
                'Torque_scaling_factor(standardization)', 'Glow_plug_control_request']
-df = df.drop(df[one_val_col],axis=1)
 
 #Column names of numerically distributed columns
 to_be_scaled_col = ['Fuel_consumption', 'Accelerator_Pedal_value', 'Throttle_position_signal', 'Short_Term_Fuel_Trim_Bank1', 
@@ -22,7 +15,6 @@ to_be_scaled_col = ['Fuel_consumption', 'Accelerator_Pedal_value', 'Throttle_pos
                     'Acceleration_speed_-_Lateral', 'Steering_wheel_speed', 'Steering_wheel_angle', 'Time(s)']
 
 #Column names of columns with exactly two distinct values
-# 'PathOrder' is in this list but I think we shouldn't mess with that one
 two_val_col = ['Engine_in_fuel_cut_off', 'Standard_Torque_Ratio', 'Requested_spark_retard_angle_from_TCU', 
                'Target_engine_speed_used_in_lock-up_module', 'Activation_of_Air_compressor', 
                'Clutch_operation_acknowledge', 'PathOrder'] 
@@ -32,34 +24,3 @@ some_val_num_col = ['Engine_soacking_time', 'Long_Term_Fuel_Trim_Bank1', 'Minimu
 
 #Column names of columns with whole numbers, where numbers are more like categories
 some_val_cat_col = ['Current_Gear', 'Converter_clutch', 'Gear_Selection', 'Indication_of_brake_switch_ON/OFF'] 
-
-
-#### Transforming data
-
-##Scaling the numerically distributed columns to normal distributions between -1 and 1
-
-sc = StandardScaler()
-for col in to_be_scaled_col:
-    df[col] = sc.fit_transform(df[col].values.reshape(-1, 1))
-
-
-##Scaling the two valued columns to 0 and 1
-for col in two_val_col:
-    val = df[col].unique()
-    val.sort()
-    df[col] = [0 if i == val[0] else 0 for i in df[col]]
-
-##Scaling the values with only a couple numerical values between 0 and 1
-for col in some_val_num_col:
-    df[col] = df[col]/max(df[col])
-
-##Encoding the categorical numbers between 0 and 1
-label_mappings = {}
-for col in some_val_cat_col:
-    le = LabelEncoder()
-    le.fit(df[col])
-    df[col] = le.transform(df[col])
-    label_mappings[col] = dict(zip(le.classes_, le.transform(le.classes_)))
-    if col != 'Class':
-        df[col] = df[col]/max(df[col])
-

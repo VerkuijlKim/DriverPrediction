@@ -1,5 +1,8 @@
 import pandas as pd 
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 from Functions import *
 from DataDefined import *
 
@@ -26,9 +29,34 @@ df = scale_to_norm_dist(df, to_be_scaled_col)
 df = scale_to_two_val(df, two_val_col)
 
 ##Scaling the values with only a couple numerical values between 0 and 1
+#Oke dit werkt dus nu niet en ik heb geen idee waarom
 for col in some_val_num_col:
-    df[col] = df[col]/max(df[col])
+    df[col] = df[col]/(max(df[col]))
 
-# 'PathOrder' is in this list but I am not sure we should keep it in 
 ##Encoding the categorical numbers between 0 and 1
 df, label_mappings = encode_scale(df, some_val_cat_col)
+
+## Classifying the rides, with ride 1 gets label 0.
+df = addRideNumbers(df)
+
+
+## Model training
+
+rf = RandomForestClassifier(random_state=42)
+
+
+#relevant_features = ['Vehicle_speed', 'Acceleration_speed_-_Longitudinal', 'Acceleration_speed_-_Lateral', 'Indication_of_brake_switch_ON/OFF','Steering_wheel_speed', 'Steering_wheel_angle', 'Flywheel_torque'] 
+
+#X = df[df[relevant_features]]
+#Y = df['Class']
+
+X = df.drop(['Class'], axis=1)
+Y = df['Class']
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.2, random_state = 42)
+
+rf.fit(X_train, y_train)
+predictions = rf.predict(X_test)
+
+print(classification_report(y_test, predictions))

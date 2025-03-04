@@ -118,3 +118,50 @@ def addRideNumbers(df):
         df_drivers_to_concat.append(df_driver)
 
     return pd.concat(df_drivers_to_concat, axis=0, ignore_index=True)
+
+"""
+Splits the data into a training and test set. The test set 
+contains a full ride of every single one of the drivers. The 
+number of the ride is given with the index.
+
+@param df             dataframe
+@param features       list of column names of the dataframe 
+                      we want to keep, + Class and Ride number
+@param index          indicates which ride nr is taken 
+                      for the test set
+
+@return X_train       train data
+@return X_test        test data
+@return y_train       train labels
+@return y_test        test labels
+"""
+def split_train_test_self(df, features, index):
+    features.extend(['Class', 'Ride number'])
+    
+    df_rel = df[features].copy(deep=False)
+    df_testset_to_concat = []
+    drivers = df['Class'].unique()
+
+    #split it up into two dataframes (train + test)
+    for driver in drivers:
+        #create test set
+        test_set = df_rel.loc[(df_rel['Class'] == driver) & (df_rel['Ride number'] == index)]
+        #add test set to df_testset
+        df_testset_to_concat.append(test_set)
+        #drop testset from og df
+        df_rel.drop(df_rel.loc[(df_rel['Class'] == driver) & (df_rel['Ride number'] == index)].index, inplace=True)
+
+    df_testset = pd.concat(df_testset_to_concat, axis=0, ignore_index=True)
+    
+    #sample both of them with frac=1
+    df_testset = df_testset.sample(frac = 1, random_state=42)
+    df_trainingset = df_rel.sample(frac = 1, random_state=42)
+
+    #define X_train, X_test, y_train, y_test
+    y_train = df_trainingset['Class'].copy(deep=False)
+    X_train = df_trainingset.drop(['Class', 'Ride number'], axis=1)
+    
+    y_test = df_testset['Class'].copy(deep=False)
+    X_test = df_testset.drop(['Class', 'Ride number'], axis=1)
+
+    return X_train, X_test, y_train, y_test

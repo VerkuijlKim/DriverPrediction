@@ -3,6 +3,9 @@
 # 'Class'
 # 'PathOrder'
 
+#Column names we want the derivative of
+to_diff_col = ['Steering_wheel_speed', 'Accelerator_Pedal_value', 'Vehicle_speed']
+
 #Column names of all columns with only 1 value
 one_val_col = ['Filtered_Accelerator_Pedal_value', 'Inhibition_of_engine_fuel_cut_off', 'Fuel_Pressure', 
                'Torque_scaling_factor(standardization)', 'Glow_plug_control_request']
@@ -20,9 +23,9 @@ to_be_scaled_col = ['Fuel_consumption', 'Accelerator_Pedal_value', 'Throttle_pos
                     'Acceleration_speed_-_Lateral', 'Steering_wheel_speed', 'Steering_wheel_angle']
 
 #Column names of columns with exactly two distinct values
-two_val_col = ['Engine_in_fuel_cut_off', 'Standard_Torque_Ratio', 'Requested_spark_retard_angle_from_TCU', 
+two_val_col = ['Standard_Torque_Ratio', 'Requested_spark_retard_angle_from_TCU', 
                'Target_engine_speed_used_in_lock-up_module', 'Activation_of_Air_compressor', 
-               'Clutch_operation_acknowledge'] 
+               'Clutch_operation_acknowledge', 'Engine_in_fuel_cut_off'] 
 
 #Column names of columns with only a couple distinct numbers (like up to 10)
 some_val_num_col = ['Engine_soacking_time', 'Long_Term_Fuel_Trim_Bank1', 'Minimum_indicated_engine_torque']

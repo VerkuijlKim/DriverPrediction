@@ -239,3 +239,51 @@ def split_train_test_self(df, features, index):
     X_test = df_testset.drop(['Class', 'Ride number'], axis=1)
 
     return X_train, X_test, y_train, y_test
+
+def aggregate(df, column_names):
+    """
+    Adds features (mean, std, min, max) to selected
+    columns of the dataframe. Calculates these values
+    per driver per ride. Returns only the features 
+    of the selected columns, as the features 
+    summarize the dataset.
+
+    @param df               dataframe
+    @param column_names     list of column names of the dataframe 
+                            we want to calculate the values for, 
+                            + Class and Ride number
+
+    @return df_aggregated   dataframe of added features
+    """
+    df_rel_feat = df[column_names].copy(deep=False)
+
+    # voor alle columns average and std
+    df_to_concat = []
+
+    for driver in df_rel_feat['Class'].unique():
+        df_rel_driver = df_rel_feat[df_rel_feat['Class'] == driver]
+        for ridenr in df_rel_driver['Ride number'].unique():
+            df_rel_driver_rel_nr = df_rel_driver[df_rel_driver['Ride number'] == ridenr]
+            col_names = []
+            col_values = []
+            for col in column_names:
+                if col != 'Class' and col != 'Ride number':
+                    #mean
+                    curr_avr = df_rel_driver_rel_nr[col].mean()
+                    #std
+                    curr_std = df_rel_driver_rel_nr[col].std()
+                    #min
+                    curr_min = df_rel_driver_rel_nr[col].min()
+                    #max
+                    curr_max = df_rel_driver_rel_nr[col].max()
+                    col_names.extend([col + ' mean', col + ' std', col + ' min', col + ' max'])
+                    col_values.extend([curr_avr, curr_std, curr_min, curr_max])
+            col_names.extend(['Class', 'Ride number'])
+            col_values.extend([(driver), (ridenr)])
+            df_aggregated_driver_nr = pd.DataFrame(data=[col_values], columns=col_names)
+            df_aggregated_driver_nr.head(5)
+            df_to_concat.append(df_aggregated_driver_nr)
+
+    df_aggregated = pd.concat(df_to_concat, axis=0, ignore_index=True)
+
+    return df_aggregated

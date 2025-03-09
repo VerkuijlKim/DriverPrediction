@@ -99,10 +99,12 @@ def driver_features(df, columns):
 def add_delta(df, columns):
     """
     This function adds delta (difference) columns for each specified column.
+    It also sets the delta to 0 when the timestamp is 1, which indicates a new ride/driver.
     """
     for col in columns:
         delta_col_name = f"{col}_delta"
         df[delta_col_name] = df[col].diff() 
+        df.loc[df['Time(s)'] == 1, delta_col_name] = 0.0
     
     return df
 

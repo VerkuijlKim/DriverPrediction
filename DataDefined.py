@@ -3,8 +3,6 @@
 # 'Class'
 # 'PathOrder'
 
-#Column names we want the derivative of
-to_diff_col = ['Steering_wheel_speed', 'Accelerator_Pedal_value', 'Vehicle_speed']
 
 #Column names of all columns with only 1 value
 one_val_col = ['Filtered_Accelerator_Pedal_value', 'Inhibition_of_engine_fuel_cut_off', 'Fuel_Pressure', 

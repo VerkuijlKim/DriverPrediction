@@ -2,10 +2,12 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
+from sklearn.model_selection import train_test_split
 
 
 
-def preprocessing(df, one_val_col, to_be_scaled_col, two_val_col, some_val_num_col, some_val_cat_col):
+def preprocessing(df, one_val_col, irrelevant_col, to_be_scaled_col, two_val_col, some_val_num_col, some_val_cat_col):
     """
     Performs all of the normalisation functions on the
     columns they apply to.
@@ -25,11 +27,14 @@ def preprocessing(df, one_val_col, to_be_scaled_col, two_val_col, some_val_num_c
     """
     # Dropping the columns with only one value
     df = df.drop(df[one_val_col],axis=1)
+    # Drop irrelevant columns
+    df = df.drop(irrelevant_col,axis=1)
+
     # Dropping PathOrder, as we can't use this information because we don't know what it stands for
     df = df.drop('PathOrder', axis=1)
 
     #plot the to be scaled columns
-    plot_distr(df, to_be_scaled_col, 3)
+    #plot_distr(df, to_be_scaled_col, 3)
 
     ## if we want to fumble with the distribution a bit, unblock the following code:
     #col_to_change = to_be_scaled_col #for now I've set them to all of them, change this if you don't want this
@@ -92,15 +97,6 @@ def encode_scale(df, col_names):
     For columns with numerical categories, encode them and
     then scale them relative to eachother on a scale from
     0 to 1.
-
-    @param df                   dataframe
-    @param col_names            given colum names of the df, on which 
-                                normalisation has to happen
-
-    @return df                  return the updated df
-    @return label_mappings      save the label_mappings, so you can 
-                                look back to which label is which
-                                category
     """
     label_mappings = {}
     for col in col_names:
@@ -117,13 +113,6 @@ def plot_distr(df, columns, nr_col):
     """
     Plot the histplot of the distribution of given columns
     of the df.
-
-    @param df           dataframe
-    @param col_names    given colum names of the df, on which 
-                        normalisation has to happen
-    @param nr_col=3     nr of columns in the subplots
-
-    @output             histplots for all the given columns
     """
     nr_row = len(columns)//nr_col
     
@@ -148,10 +137,6 @@ def addRideNumbers(df):
     adds a column for every row to specificy which ride it was, in order 
     to use this to better split the data for model testing and training
     later.
-
-    @param df             dataframe
-
-    @return df            dataframe with the added column
     """
     drivers = df['Class'].unique()
 
@@ -179,13 +164,7 @@ def addRideNumbers(df):
 def add_derivatives(df, col_names):
     """
     Adds the derivatives of the given columns 
-    to the dataframe
-
-    @param df           dataframe
-    @param col_names    column names of the df for which
-                        to add the derivatives
-
-    @return df          return updated df
+    to the dataframe in a new column
     """
     for col in col_names:
         new_col_name = col + '_derivative'
@@ -198,17 +177,6 @@ def split_train_test_self(df, features, index):
     Splits the data into a training and test set. The test set 
     contains a full ride of every single one of the drivers. The 
     number of the ride is given with the index.
-
-    @param df           dataframe
-    @param features     list of column names of the dataframe 
-                        we want to keep, + Class and Ride number
-    @param index        indicates which ride nr is taken 
-                        for the test set
-
-    @return X_train     train data
-    @return X_test      test data
-    @return y_train     train labels
-    @return y_test      test labels
     """
     features.extend(['Class', 'Ride number'])
     
@@ -239,6 +207,7 @@ def split_train_test_self(df, features, index):
     X_test = df_testset.drop(['Class', 'Ride number'], axis=1)
 
     return X_train, X_test, y_train, y_test
+
 
 def split_train_test_certain_drivers_in_test(df, features, index, drivers_to_exclude):
     """
@@ -289,6 +258,115 @@ def split_train_test_certain_drivers_in_test(df, features, index, drivers_to_exc
     X_test = df_testset.drop(['Class', 'Ride number'], axis=1)
 
     return X_train, X_test, y_train, y_test
+
+def splitDataForSVM(df, driver1, driver2, seed):
+    df_driver1 = df[df['Class'] == driver1].copy(deep=True)
+    df_driver2 = df[df['Class'] == driver2].copy(deep=True)
+
+    ride_counts1 = df_driver1['Ride number'].unique().tolist()
+    ride_counts2 = df_driver2['Ride number'].unique().tolist()
+    ride_nr = []
+
+    for i in range(0, 4):
+        if i%2 == 0: #driver1
+            randomGen = random.Random(i*seed)
+            drive_nr = randomGen.sample(ride_counts1, 1)
+            ride_nr.append(drive_nr[0])
+            ride_counts1.pop(drive_nr[0])
+        else: # driver2
+            randomGen = random.Random(i*seed)
+            drive_nr = randomGen.sample(ride_counts2, 1)
+            ride_nr.append(drive_nr[0])
+            ride_counts2.pop(drive_nr[0])
+
+    ## create test set
+    df_test1 = df_driver1[df_driver1['Ride number'] == ride_nr[0]]
+    df_test2 = df_driver2[df_driver2['Ride number'] == ride_nr[1]]
+    df_test = pd.concat([df_test1, df_test2])
+
+    ## create validation set
+    df_val1 = df_driver1[df_driver1['Ride number'] == ride_nr[2]]
+    df_val2 = df_driver2[df_driver2['Ride number'] == ride_nr[3]]
+    df_val = pd.concat([df_val1, df_val2])
+
+    ## create training set
+    df_train1 = df_driver1[df_driver1['Ride number'].isin(ride_counts1)]
+    df_train2 = df_driver2[df_driver2['Ride number'].isin(ride_counts2)]
+    df_train = pd.concat([df_train1, df_train2])
+
+    ### Shuffle all of the datasets
+    df_test = df_test.sample(frac = 1, random_state=seed)
+    df_val = df_val.sample(frac = 1, random_state=seed)
+    df_train = df_train.sample(frac = 1, random_state=seed)
+
+
+    ## split df up into X and y
+    X_train, y_train = split_into_X_and_y(df_train)
+    X_test, y_test = split_into_X_and_y(df_test)
+    X_val, y_val = split_into_X_and_y(df_val)
+
+
+    return X_train, y_train, X_test, y_test, X_val, y_val
+
+def getDataSplitForTwoDrivers(df, driver1, driver2, seed):
+    """
+    Splits the data into a trainingset, testset, and validation
+    set for two drivers. One ride from both drivers for the test set,
+    one drive from both drivers for the validation set, and the
+    rest of the drives from driver1 for the trainingset.
+    """
+
+    df_driver1 = df[df['Class'] == driver1].copy(deep=True)
+    df_driver2 = df[df['Class'] == driver2].copy(deep=True)
+
+    ###################
+    # Get ride for validation set
+
+    ride_counts1 = df_driver1['Ride number'].unique().tolist()
+    ride_counts2 = df_driver2['Ride number'].unique().tolist()
+    ride_nr = []
+
+    for i in range(0, 4):
+        if i%2 == 0: #driver1
+            randomGen = random.Random(i*seed)
+            drive_nr = randomGen.sample(ride_counts1, 1)
+            ride_nr.append(drive_nr[0])
+            ride_counts1.pop(drive_nr[0])
+        else: # driver2
+            randomGen = random.Random(i*seed)
+            drive_nr = randomGen.sample(ride_counts2, 1)
+            ride_nr.append(drive_nr[0])
+            ride_counts2.pop(drive_nr[0])
+    ## create test set
+    df_test1 = df_driver1[df_driver1['Ride number'] == ride_nr[0]]
+    df_test2 = df_driver2[df_driver2['Ride number'] == ride_nr[1]]
+    df_test = pd.concat([df_test1, df_test2])
+
+    ## create validation set
+    df_val1 = df_driver1[df_driver1['Ride number'] == ride_nr[2]]
+    df_val2 = df_driver2[df_driver2['Ride number'] == ride_nr[3]]
+    df_val = pd.concat([df_val1, df_val2])
+
+    ## create training set
+    df_train = df_driver1[df_driver1['Ride number'].isin(ride_counts1)]
+
+    ### Shuffle all of the datasets
+    df_test = df_test.sample(frac = 1, random_state=seed)
+    df_val = df_val.sample(frac = 1, random_state=seed)
+    df_train = df_train.sample(frac = 1, random_state=seed)
+
+
+    ## split df up into X and y
+    X_train, y_train = split_into_X_and_y(df_train)
+    X_test, y_test = split_into_X_and_y(df_test)
+    X_val, y_val = split_into_X_and_y(df_val)
+
+    return X_train, y_train, X_test, y_test, X_val, y_val
+
+def split_into_X_and_y(df):
+    X = df.drop(['Class', 'Ride number', 'Time(s)'], axis=1)
+    y = df['Class']
+    return X, y
 
 
 def aggregate(df, column_names):

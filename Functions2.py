@@ -128,6 +128,21 @@ def split_train_test_ood(df, driver_nr, frac):
 
     return train_df, test_df
 
+def split_train_test_ood_train1class(df, driver_nr_ood, driver_nr_train, frac):
+    """
+    Moves one entire driver's data into the test set.
+    Includes samples from one driver in test set, rest of this
+    driver's data becomes the training set.
+    """
+
+    test_df = df[df['Class'] == driver_nr_ood]
+    df_driver_train = df[df['Class'] == driver_nr_train]
+    sampled_test_df = df_driver_train.groupby('Class').sample(frac=frac, random_state=42)
+    test_df = pd.concat([test_df, sampled_test_df])
+    train_df = df_driver_train.drop(sampled_test_df.index)
+
+    return train_df, test_df    
+
 
 ###############################################################################
 # Models
@@ -137,13 +152,17 @@ def split_train_test_ood(df, driver_nr, frac):
 class TabularNN(nn.Module):
     def __init__(self, input_dim):
         super(TabularNN, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)  
-        self.fc2 = nn.Linear(64, 32)  
-        self.fc3 = nn.Linear(32, 10)   # Output layer: 10 classes
+        self.fc1 = nn.Linear(input_dim, 128)  
+        self.fc2 = nn.Linear(92, 64)
+        self.fc3 = nn.Linear(64,32)  #new
+        self.fc4 = nn.Linear(32,25)  #new
+        self.fc5 = nn.Linear(25, 10)   # Output layer: 10 classes
         self.relu = nn.ReLU()
     
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.relu(self.fc3(x)) #
+        x = self.relu(self.fc4(x)) #
+        x = self.fc5(x)
         return x

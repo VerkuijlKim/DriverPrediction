@@ -259,6 +259,55 @@ def split_train_test_certain_drivers_in_test(df, features, index, drivers_to_exc
 
     return X_train, X_test, y_train, y_test
 
+
+def splitDataForPairWise(df, driver1, driver2, seed):
+    df_driver1 = df[df['Class'] == driver1].copy(deep=True)
+    df_driver2 = df[df['Class'] == driver2].copy(deep=True)
+
+    ride_counts1 = df_driver1['Ride number'].unique().tolist()
+    ride_counts2 = df_driver2['Ride number'].unique().tolist()
+    ride_nr = []
+
+    for i in range(0, 4):
+        if i%2 == 0: #driver1
+            randomGen = random.Random(i*seed)
+            drive_nr = randomGen.sample(ride_counts1, 1)
+            ride_nr.append(drive_nr[0])
+            ride_counts1.pop(drive_nr[0])
+        else: # driver2
+            randomGen = random.Random(i*seed)
+            drive_nr = randomGen.sample(ride_counts2, 1)
+            ride_nr.append(drive_nr[0])
+            ride_counts2.pop(drive_nr[0])
+
+    ## create test set
+    df_test1 = df_driver1[df_driver1['Ride number'] == ride_nr[0]]
+    df_test2 = df_driver2[df_driver2['Ride number'] == ride_nr[1]]
+    #df_test = pd.concat([df_test1, df_test2])
+
+    ## create validation set
+    df_val1 = df_driver1[df_driver1['Ride number'] == ride_nr[2]]
+    df_val2 = df_driver2[df_driver2['Ride number'] == ride_nr[3]]
+    #df_val = pd.concat([df_val1, df_val2])
+
+    ## create training set
+    df_train = df_driver1[df_driver1['Ride number'].isin(ride_counts1)]
+    
+
+    ### Shuffle all of the datasets
+    df_test1 = df_test1.sample(frac = 1, random_state=seed)
+    df_test2 = df_test2.sample(frac = 1, random_state=seed)
+    df_val1 = df_val1.sample(frac = 1, random_state=seed)
+    df_val2 = df_val2.sample(frac = 1, random_state=seed)
+    df_train = df_train.sample(frac = 1, random_state=seed)
+
+
+    ## split df up into X and y
+    X_train, y_train = split_into_X_and_y(df_train)
+
+
+    return X_train, y_train, df_test1, df_test2, df_val1, df_val1
+
 def splitDataForSVM(df, driver1, driver2, seed):
     df_driver1 = df[df['Class'] == driver1].copy(deep=True)
     df_driver2 = df[df['Class'] == driver2].copy(deep=True)
@@ -290,9 +339,9 @@ def splitDataForSVM(df, driver1, driver2, seed):
     df_val = pd.concat([df_val1, df_val2])
 
     ## create training set
-    df_train1 = df_driver1[df_driver1['Ride number'].isin(ride_counts1)]
-    df_train2 = df_driver2[df_driver2['Ride number'].isin(ride_counts2)]
-    df_train = pd.concat([df_train1, df_train2])
+    df_train = df_driver1[df_driver1['Ride number'].isin(ride_counts1)]
+    #df_train2 = df_driver2[df_driver2['Ride number'].isin(ride_counts2)]
+    #df_train = pd.concat([df_train1, df_train2])
 
     ### Shuffle all of the datasets
     df_test = df_test.sample(frac = 1, random_state=seed)

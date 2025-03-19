@@ -40,3 +40,15 @@ delta_col = ['Steering_wheel_speed',
              'Accelerator_Pedal_value', 
              'Vehicle_speed'
              ]
+
+relevant_features = ['Accelerator_Pedal_value',
+                     'Vehicle_speed', 
+                     'Acceleration_speed_-_Longitudinal', 
+                     'Acceleration_speed_-_Lateral', 
+                     'Indication_of_brake_switch_ON/OFF',   # categorical
+                     'Steering_wheel_speed', 
+                     'Steering_wheel_angle', 
+                     'Master_cylinder_pressure', 
+                     'Fuel_consumption',
+                     'Flywheel_torque'
+                     ]

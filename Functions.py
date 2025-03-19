@@ -172,6 +172,7 @@ def add_derivatives(df, col_names):
         df[new_col_name] = df[col].diff()
     return df
 
+#####################################################
 
 def split_train_test_self(df, features, index):
     """
@@ -284,12 +285,12 @@ def splitDataForPairWise(df, driver1, driver2, seed):
     ## create test set
     df_test1 = df_driver1[df_driver1['Ride number'] == ride_nr[0]]
     df_test2 = df_driver2[df_driver2['Ride number'] == ride_nr[1]]
-    #df_test = pd.concat([df_test1, df_test2])
+    ####df_test = pd.concat([df_test1, df_test2])
 
     ## create validation set
     df_val1 = df_driver1[df_driver1['Ride number'] == ride_nr[2]]
     df_val2 = df_driver2[df_driver2['Ride number'] == ride_nr[3]]
-    #df_val = pd.concat([df_val1, df_val2])
+    ####df_val = pd.concat([df_val1, df_val2])
 
     ## create training set
     df_train = df_driver1[df_driver1['Ride number'].isin(ride_counts1)]
@@ -307,7 +308,7 @@ def splitDataForPairWise(df, driver1, driver2, seed):
     X_train, y_train = split_into_X_and_y(df_train)
 
 
-    return X_train, y_train, df_test1, df_test2, df_val1, df_val1
+    return X_train, y_train, df_test1, df_test2, df_val1, df_val2
 
 def splitDataForSVM(df, driver1, driver2, seed):
     df_driver1 = df[df['Class'] == driver1].copy(deep=True)

@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn import metrics
 import random
 from sklearn.model_selection import train_test_split
 
@@ -418,6 +419,65 @@ def split_into_X_and_y(df):
     return X, y
 
 
+def smart_split_train(df, features, index, drivers_to_train_on, drivers_to_test_on):
+    """
+    Splits the data into a training and test set. The test set 
+    contains a full ride of every single one of the drivers. The 
+    number of the ride is given with the index.
+
+    @param df                   dataframe
+    @param features             list of column names of the dataframe we want to keep excluding Class and Ride number
+    @param index                indicates which ride nr is taken for the test set from everyone
+    @param drivers_to_train_on  list of drivers that are wanted in the train set (x&y train) 
+    @param drivers_to_test_on   list of drivers that are wanted fully in the test set (x&y test) (either way one ride per person is tested)
+
+    @return X_train     train data
+    @return X_test      test data
+    @return y_train     train labels
+    @return y_test      test labels
+    """
+    features.extend(['Class', 'Ride number'])
+    df_rel = df[features].copy(deep=False)
+    df_testset_to_concat = []
+    df_trainset_to_concat = []
+    drivers = df['Class'].unique()
+
+    #split it up into two dataframes (train + test)
+    for driver in drivers:
+        #create test set
+        test_set = df_rel.loc[(df_rel['Class'].isin(drivers_to_test_on)) | 
+                      ((df_rel['Class'] == driver) & (df_rel['Ride number'] == index))]
+        #add test set to df_testset
+        df_testset_to_concat.append(test_set)
+        #drop testset from og df
+        df_rel.drop(df_rel.loc[(df_rel['Class'].isin(drivers_to_test_on)) | ((df_rel['Class'] == driver) & (df_rel['Ride number'] == index))].index, inplace=True)
+
+    for driver in drivers:
+        #create training set
+        train_set = df_rel.loc[(df_rel['Class'].isin(drivers_to_train_on))]
+        #add training set to df_trainingset
+        df_trainset_to_concat.append(train_set)
+        #drop train_set from og df
+        df_rel.drop(df_rel.loc[(df_rel['Class'].isin(drivers_to_train_on))].index, inplace=True)
+
+
+    df_testset = pd.concat(df_testset_to_concat, axis=0, ignore_index=True)
+    df_trainset = pd.concat(df_trainset_to_concat, axis=0, ignore_index=True)
+    
+    #sample both of them with frac=1
+    df_testset = df_testset.sample(frac = 1, random_state=42)
+    df_trainingset = df_trainset.sample(frac = 1, random_state=42)
+
+    #define X_train, X_test, y_train, y_test
+    y_test = df_testset['Class'].copy(deep=False)
+    X_test = df_testset.drop(['Class', 'Ride number'], axis=1)
+
+    y_train = df_trainingset['Class'].copy(deep=False)
+    X_train = df_trainingset.drop(['Class', 'Ride number'], axis=1)
+
+    return X_train, X_test, y_train, y_test
+
+
 def aggregate(df, column_names):
     """
     Adds features (mean, std, min, max) to selected
@@ -465,3 +525,22 @@ def aggregate(df, column_names):
     df_aggregated = pd.concat(df_to_concat, axis=0, ignore_index=True)
 
     return df_aggregated
+
+
+def calculate_ROC_AUC_score(y_test_ood, max_probs):
+    """
+    Calculates the ROC AUC score for a model based on its probability predictions 
+    and the actual class labels (in or out of distribution).
+
+    @param y_test_ood   tensor containing the actual class labels, where -1 represents out-of-distribution
+    @param max_probs    tensor or array containing the model's probability predictions
+    
+    @return roc_auc_score_of_model  computed ROC AUC score as a float
+    """
+    # Convert OOD (-1) labels to 0, and in-distribution labels to 1
+    x_true_values = torch.where(y_test_ood == -1, torch.tensor(0), torch.tensor(1))
+
+    # Compute the ROC AUC score
+    roc_auc_score_of_model = metrics.roc_auc_score(x_true_values.numpy(), max_probs.numpy())
+
+    return roc_auc_score_of_model

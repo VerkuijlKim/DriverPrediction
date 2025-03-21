@@ -41,7 +41,7 @@ delta_col = ['Steering_wheel_speed',
              'Vehicle_speed'
              ]
 
-relevant_features = ['Accelerator_Pedal_value',
+relevant_features = ['Absolute_throttle_position',
                      'Vehicle_speed', 
                      'Acceleration_speed_-_Longitudinal', 
                      'Acceleration_speed_-_Lateral', 

@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from models.ResNet import ResNet1D
 from models.OneClassSVM import OCSVM
+from models.IsolationForest import IsolationForestModel
 
 def id_ood_val_data(cfg, data):
     id_data = data[data['Class'] == cfg.id_class]
@@ -157,6 +158,8 @@ def init_model(cfg):
         model = ResNet1D(cfg)
     elif cfg.model.name == "OneClassSVM":
         model = OCSVM(cfg)
+    elif cfg.model.name == "IsolationForest":
+        model = IsolationForestModel(cfg)
     else:
         raise NotImplementedError(f"Model {cfg.model.name} not implemented.")
     return model

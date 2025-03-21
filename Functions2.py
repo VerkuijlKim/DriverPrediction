@@ -1,14 +1,16 @@
 
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
-import torch
+from sklearn.metrics import roc_curve, roc_auc_score
 import torch.nn as nn
-import torch.optim as optim
+import numpy as np
+import scipy.stats as stats
 
 
 ###############################################################################
 # Functions for data preprocessing
 ###############################################################################
+
 
 def addRideNumbers(df):
     """ 
@@ -128,6 +130,7 @@ def split_train_test_ood(df, driver_nr, frac):
 
     return train_df, test_df
 
+
 def split_train_test_ood_train1class(df, driver_nr_ood, driver_nr_train, frac):
     """
     Moves one entire driver's data into the test set.
@@ -152,17 +155,104 @@ def split_train_test_ood_train1class(df, driver_nr_ood, driver_nr_train, frac):
 class TabularNN(nn.Module):
     def __init__(self, input_dim):
         super(TabularNN, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 128)  
-        self.fc2 = nn.Linear(92, 64)
-        self.fc3 = nn.Linear(64,32)  #new
-        self.fc4 = nn.Linear(32,25)  #new
-        self.fc5 = nn.Linear(25, 10)   # Output layer: 10 classes
+        self.fc1 = nn.Linear(input_dim, 64)  
+        self.fc2 = nn.Linear(64, 32)  
+        self.fc3 = nn.Linear(32, 10)   # Output layer: 10 classes
         self.relu = nn.ReLU()
-    
+ 
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
-        x = self.relu(self.fc3(x)) #
-        x = self.relu(self.fc4(x)) #
-        x = self.fc5(x)
+        x = self.fc3(x)
         return x
+
+
+###############################################################################
+# Sliding windows functions
+###############################################################################
+
+
+def create_sliding_windows(data, window_size=60, overlap=40):
+    """
+    Create sliding windows from the input data.
+    
+    Args:
+        data: pandas DataFrame where each row is a 1-second sample
+        window_size: size of each window in seconds
+        overlap: overlap between consecutive windows in seconds
+    
+    Returns:
+        List of pandas DataFrames, each representing a window
+    """
+    stride = window_size - overlap
+    n_samples = len(data)
+    windows = []
+    
+    # Start indices for each window
+    start_indices = range(0, n_samples - window_size + 1, stride)
+    
+    for start_idx in start_indices:
+        end_idx = start_idx + window_size
+        window = data.iloc[start_idx:end_idx].copy()
+        windows.append(window)
+    
+    return windows
+
+
+# def create_sliding_windows_for_all_rides(data, window_size=60, overlap=40):
+#     """
+#     Create sliding windows for all rides in the input data.
+    
+#     Args:
+#         data: pandas DataFrame where each row is a 1-second sample
+#         window_size: size of each window in seconds
+#         overlap: overlap between consecutive windows in seconds
+    
+#     Returns:
+#         List of pandas DataFrames, each representing a window
+#     """
+ 
+#     # Initialize list to store all windows
+#     all_windows = []
+    
+#     # Group data by 'Ride number' and create sliding windows for each ride
+#     for ride_number in sorted(data['Ride number'].unique()):
+#         ride_data = data[data['Ride number'] == ride_number]
+#         ride_windows = create_sliding_windows(ride_data, window_size, overlap)
+#         all_windows.extend(ride_windows)
+    
+#     return all_windows
+
+
+def extract_features_from_window(df):
+    """Extract relevant features from a single time window DataFrame"""
+    features = []
+    
+    # Statistical features for each column
+    for column in df.columns:
+        # Skip non-numeric or irrelevant columns
+        if df[column].dtype in [np.float64, np.int64]:
+            features.append(df[column].mean())
+            features.append(df[column].std())
+            features.append(df[column].min())
+            features.append(df[column].max())
+            features.append(df[column].skew())
+            features.append(df[column].kurt())
+            features.append(np.ptp(df[column]))
+            features.append(stats.median_abs_deviation(df[column]))
+            features.append(np.mean(np.abs(df[column] - 1)))         
+    
+    return np.array(features)
+
+###############################################################################
+# Evaluation functions
+###############################################################################
+
+
+def evaluate_ood_performance(ood_scores, ood_labels):
+    auroc = roc_auc_score(ood_labels, ood_scores)
+    fpr, tpr, thresholds = roc_curve(ood_labels, ood_scores)
+    target_index = np.argmin(np.abs(tpr - 0.95))
+    fpr95 = fpr[target_index]
+    return auroc, fpr95
+    

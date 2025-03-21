@@ -6,7 +6,6 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 from utils import id_ood_val_loaders, init_model, init_optimiser, id_ood_val_data
 
-
 def train_test_model(cfg, data):
     if cfg.model.is_DL:
         train_loader, val_loader, test_id_loader, ood_loader = id_ood_val_loaders(cfg, data)
@@ -38,9 +37,9 @@ def evaluate_ood_performance(ood_scores, ood_labels):
     print(f"FPR95: {fpr95:.4f}")
 
 
-@hydra.main(config_path="../cybercrime_2025_driving/conf", config_name="config_main", version_base=None)
+@hydra.main(config_path="../cybercrime_2025_driving-master/conf", config_name="config_main", version_base=None)
 def main(cfg): 
-    data = pd.read_csv('data/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv')
+    data = pd.read_csv('C:/Users/miria/OneDrive/Documents/GitHub/driver_prediction/Connor/cybercrime_2025_driving-master/cybercrime_2025_driving-master/data/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv')
 
     train_test_model(cfg, data)
 

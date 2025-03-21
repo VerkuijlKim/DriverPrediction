@@ -1,0 +1,11 @@
+.qodo
+/data/*
+!/data/.gitkeep
+/__pycache__/
+/.venv/
+/.vscode/
+/.idea/
+best_contrastive_model.pt
+/outputs/
+/multirun/
+__pycache__

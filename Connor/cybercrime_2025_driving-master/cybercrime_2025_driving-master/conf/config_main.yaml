@@ -1,0 +1,22 @@
+defaults:
+  - _self_ 
+  - model: OneClassSVM # ResNet, OneClassSVM
+
+id_class: A
+ood_class: B
+num_vars: 51
+
+# Windowing 
+window_size: 60
+window_overlap: 40
+shuffle_windows: True
+# Data split
+train_ratio: 0.7
+val_ratio: 0.1
+test_ratio: 0.2
+
+# Training DL
+batch_size: 64
+num_epochs: 50
+device: 'cuda:0'
+

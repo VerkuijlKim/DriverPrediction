@@ -1,0 +1,8 @@
+name: OneClassSVM
+is_DL: False
+
+nu: 0.05
+gamma: 0.01
+kernel: 'rbf'
+
+use_features: True

@@ -1,6 +1,4 @@
-
 import numpy as np
-
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import IsolationForest
@@ -15,11 +13,8 @@ class IsolationForestModel():
         self.pipeline = Pipeline([
             ('scaler', StandardScaler()),
             ('isolation_forest', IsolationForest(
-                n_estimators=100,         # Number of trees
-                max_samples= 'auto',      # Samples used for training each tree
-                contamination= 'auto',    # Proportion of outliers in the data
-                random_state=42,          # For reproducibility
-                n_jobs=-1                 # Use all available cores
+                random_state=42,
+                n_jobs=-1
             ))
         ])
 
@@ -29,11 +24,16 @@ class IsolationForestModel():
     def compute_ood_score(self, x):
         scores = self.pipeline.decision_function(x)
         scores = 1 - (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
-        return scores # higher values => more likely OOD
+        return scores   # higher score -> more likely OOD
 
     def test_model(self, id_data, ood_data):
         id_scores = self.compute_ood_score(id_data)
         ood_scores = self.compute_ood_score(ood_data)
+       
+        # id_LRs = (1 - id_scores) / id_scores  # P_Hp / P_Hd for ID data
+        # ood_LRs = (1 - ood_scores) / ood_scores  # P_Hp / P_Hd for OOD data
+        # LRs = np.concatenate([id_LRs, ood_LRs])
+
         scores = np.concatenate([id_scores, ood_scores])
         labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])
         return scores, labels
@@ -45,7 +45,7 @@ class LocalOutlierFactorModel():
               
         self.pipeline = Pipeline([
             ('scaler', StandardScaler()),
-            ('isolation_forest', LocalOutlierFactor(
+            ('lof', LocalOutlierFactor(
                 novelty=True,
                 n_jobs=-1
                 ))
@@ -55,15 +55,23 @@ class LocalOutlierFactorModel():
         self.pipeline.fit(train_data)
 
     def compute_ood_score(self, x):
-        scores = self.pipeline.decision_function(x)
+        scores = - self.pipeline.decision_function(x)   # flip sign because higher should mean more likely OOD
         scores = 1 - (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
-        return scores # higher values => more likely OOD
+        return scores   # higher score -> more likely OOD
 
     def test_model(self, id_data, ood_data):
         id_scores = self.compute_ood_score(id_data)
         ood_scores = self.compute_ood_score(ood_data)
+
+        # print('id score:', id_scores)
+        # print('ood score:', ood_scores)
+
+        # id_LRs = (1 - id_scores) / id_scores  # P_Hp / P_Hd for ID data
+        # ood_LRs = (1 - ood_scores) / ood_scores  # P_Hp / P_Hd for OOD data
+        # LRs = np.concatenate([id_LRs, ood_LRs])
+        
         scores = np.concatenate([id_scores, ood_scores])
-        labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])
+        labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])   # 0 = inlier, 1 = outlier
         return scores, labels
     
 
@@ -85,11 +93,16 @@ class OCSVM():
     def compute_ood_score(self, x):
         scores = self.pipeline.decision_function(x)
         scores = (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
-        return 1 - scores # higher values => more likely OOD
+        return 1 - scores   # higher score -> more likely OOD
     
     def test_model(self, id_data, ood_data):
         id_scores = self.compute_ood_score(id_data)
         ood_scores = self.compute_ood_score(ood_data)
+
+        # id_LRs = (1 - id_scores) / id_scores  # P_Hp / P_Hd for ID data
+        # ood_LRs = (1 - ood_scores) / ood_scores  # P_Hp / P_Hd for OOD data
+        # LRs = np.concatenate([id_LRs, ood_LRs])
+        
         scores = np.concatenate([id_scores, ood_scores])
         labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])
         return scores, labels

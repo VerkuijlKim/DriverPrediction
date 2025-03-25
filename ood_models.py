@@ -23,20 +23,27 @@ class IsolationForestModel():
 
     def compute_ood_score(self, x):
         scores = self.pipeline.decision_function(x)
-        scores = 1 - (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
-        return scores   # higher score -> more likely OOD
+        return scores
 
     def test_model(self, id_data, ood_data):
         id_scores = self.compute_ood_score(id_data)
         ood_scores = self.compute_ood_score(ood_data)
-       
-        # id_LRs = (1 - id_scores) / id_scores  # P_Hp / P_Hd for ID data
-        # ood_LRs = (1 - ood_scores) / ood_scores  # P_Hp / P_Hd for OOD data
-        # LRs = np.concatenate([id_LRs, ood_LRs])
 
-        scores = np.concatenate([id_scores, ood_scores])
+        # Normalize using the same min-max range for both ID and OOD scores.
+        # This ensures that if two samples (one from ID, one from OOD) 
+        # get the same raw score, they remain equally ranked after normalization.
+        all_scores = np.concatenate([id_scores, ood_scores])
+        min_val, max_val = np.min(all_scores), np.max(all_scores)
+        normalized_id_scores = (id_scores - min_val) / (max_val - min_val)
+        normalized_ood_scores = (ood_scores - min_val) / (max_val - min_val)
+
+        # Higher score means more likely to be OOD
+        normalized_id_scores = 1 - normalized_id_scores
+        normalized_ood_scores = 1 - normalized_ood_scores
+
+        scores = np.concatenate([normalized_id_scores, normalized_ood_scores])
         labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])
-        return scores, labels
+        return scores, labels, all_scores
     
 
 class LocalOutlierFactorModel():
@@ -55,24 +62,28 @@ class LocalOutlierFactorModel():
         self.pipeline.fit(train_data)
 
     def compute_ood_score(self, x):
-        scores = - self.pipeline.decision_function(x)   # flip sign because higher should mean more likely OOD
-        scores = 1 - (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
-        return scores   # higher score -> more likely OOD
+        scores = self.pipeline.decision_function(x)   # large values correspond to inliers
+        return scores
 
     def test_model(self, id_data, ood_data):
         id_scores = self.compute_ood_score(id_data)
         ood_scores = self.compute_ood_score(ood_data)
 
-        # print('id score:', id_scores)
-        # print('ood score:', ood_scores)
+        # Normalize using the same min-max range for both ID and OOD scores.
+        # This ensures that if two samples (one from ID, one from OOD) 
+        # get the same raw score, they remain equally ranked after normalization.
+        all_scores = np.concatenate([id_scores, ood_scores])
+        min_val, max_val = np.min(all_scores), np.max(all_scores)
+        normalized_id_scores = (id_scores - min_val) / (max_val - min_val)
+        normalized_ood_scores = (ood_scores - min_val) / (max_val - min_val)
 
-        # id_LRs = (1 - id_scores) / id_scores  # P_Hp / P_Hd for ID data
-        # ood_LRs = (1 - ood_scores) / ood_scores  # P_Hp / P_Hd for OOD data
-        # LRs = np.concatenate([id_LRs, ood_LRs])
+        # Higher score means more likely to be OOD
+        normalized_id_scores = 1 - normalized_id_scores
+        normalized_ood_scores = 1 - normalized_ood_scores
         
-        scores = np.concatenate([id_scores, ood_scores])
+        scores = np.concatenate([normalized_id_scores, normalized_ood_scores])
         labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])   # 0 = inlier, 1 = outlier
-        return scores, labels
+        return scores, labels, all_scores
     
 
 class OCSVM():
@@ -91,18 +102,25 @@ class OCSVM():
         self.pipeline.fit(train_data)
 
     def compute_ood_score(self, x):
-        scores = self.pipeline.decision_function(x)
-        scores = (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
-        return 1 - scores   # higher score -> more likely OOD
+        scores = self.pipeline.decision_function(x)  # positive for inlier and negative for outlier
+        return scores
     
     def test_model(self, id_data, ood_data):
         id_scores = self.compute_ood_score(id_data)
         ood_scores = self.compute_ood_score(ood_data)
 
-        # id_LRs = (1 - id_scores) / id_scores  # P_Hp / P_Hd for ID data
-        # ood_LRs = (1 - ood_scores) / ood_scores  # P_Hp / P_Hd for OOD data
-        # LRs = np.concatenate([id_LRs, ood_LRs])
-        
-        scores = np.concatenate([id_scores, ood_scores])
-        labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])
-        return scores, labels
+        # Normalize using the same min-max range for both ID and OOD scores.
+        # This ensures that if two samples (one from ID, one from OOD) 
+        # get the same raw score, they remain equally ranked after normalization.
+        all_scores = np.concatenate([id_scores, ood_scores])
+        min_val, max_val = np.min(all_scores), np.max(all_scores)
+        normalized_id_scores = (id_scores - min_val) / (max_val - min_val)
+        normalized_ood_scores = (ood_scores - min_val) / (max_val - min_val)
+
+        # Higher score means more likely to be OOD
+        normalized_id_scores = 1 - normalized_id_scores
+        normalized_ood_scores = 1 - normalized_ood_scores
+
+        scores = np.concatenate([normalized_id_scores, normalized_ood_scores])
+        labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])   # 0 = inlier, 1 = outlier
+        return scores, labels, all_scores

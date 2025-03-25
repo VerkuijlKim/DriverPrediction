@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from sklearn.metrics import roc_curve, auc
+from lir.metrics import cllr
 
 
 def plot_all(scores, labels):
@@ -28,6 +29,21 @@ def plot_all(scores, labels):
     # KDE for calculating the LR
     id_kde = gaussian_kde(id_scores, bw_method='silverman')  
     ood_kde = gaussian_kde(ood_scores, bw_method='silverman')
+
+    LRs_test_id = []
+    for x in id_scores:
+        LR_x = id_kde(x)[0]/ood_kde(x)[0]
+        LRs_test_id.append(LR_x)
+
+    LRs_test_ood = []
+    for y in ood_scores:
+        LR_y = id_kde(y)[0]/ood_kde(y)[0]
+        LRs_test_ood.append(LR_y)
+
+    LRs_test = np.array(LRs_test_id + LRs_test_ood)
+    y_test = np.array([1] * len(LRs_test_id) + [0] * len(LRs_test_ood))
+    
+    print(f'The Cllr for our uncalibrated system: {cllr(LRs_test, y_test)}')
 
     # Range of scores
     unique_scores = np.linspace(min(scores), max(scores), 1000)

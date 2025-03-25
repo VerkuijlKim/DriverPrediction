@@ -3,13 +3,17 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+from sklearn.metrics import roc_curve, auc
 
 
-def plot_kde_density_and_LR(scores, labels):
+def plot_all(scores, labels):
+    """
+    Plots density graph, LR and ROC curve
+    """
     id_scores = scores[labels == 0]  # inlier scores (Hp)
     ood_scores = scores[labels == 1]  # outlier scores (Hd)
 
-    fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+    fig, ax = plt.subplots(1, 3, figsize=(20, 6))
 
     # KDE plot
     sns.kdeplot(id_scores, label="Inlier (ID)", fill=True, color='blue', ax=ax[0])
@@ -33,7 +37,7 @@ def plot_kde_density_and_LR(scores, labels):
     # Give zero values a really small value (only for OOD because denominator)
     ood_density = np.clip(ood_density, 1e-6, None)
 
-    # Calculate and plot the likelihood ratio
+    # LR plot
     likelihood_ratios = id_density / ood_density
     ax[1].plot(unique_scores, likelihood_ratios, color='b', label='Likelihood Ratio (KDE)')
     ax[1].set_xlabel('Score')
@@ -42,8 +46,25 @@ def plot_kde_density_and_LR(scores, labels):
     ax[1].legend(loc='upper right')
     ax[1].grid(True)
 
+    # Calculate ROC plot
+    normalized_scores = 1 - (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
+    fpr, tpr, thresholds = roc_curve(labels, normalized_scores)
+    roc_auc = auc(fpr, tpr)
+    
+    # ROC plot
+    ax[2].plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+    ax[2].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    ax[2].set_xlim([0.0, 1.0])
+    ax[2].set_ylim([0.0, 1.05])
+    ax[2].set_xlabel('False Positive Rate')
+    ax[2].set_ylabel('True Positive Rate')
+    ax[2].set_title('Receiver Operating Characteristic (ROC)')
+    ax[2].legend(loc="lower right")
+    
     plt.tight_layout()
     plt.show()
+
+    return likelihood_ratios
 
 
 def startup(df):
@@ -103,8 +124,18 @@ def startup(df):
     df = df[df['CLASS_ID'] == int(id_choice)]
     df = df.loc[df['CLASS_OOD'] == int(ood_choice)]
 
+    return df
+
+
+def print_stats(df):
     print('AUROC:', df['AUROC'].values)
     print('FPR95:', df['FPR95'].values)
+
+
+if __name__== "__main__":
+    df = pd.read_csv(r'comparison_normalized.csv')
+    df = startup(df)
+    print_stats(df)
 
     # Retrieve labels and scores
     labels = np.array(df['OOD labels'].iloc[0].strip("[]").split(), dtype=float)
@@ -112,9 +143,4 @@ def startup(df):
     scores = np.array(df['AllScores'].iloc[0].strip("[]").split(), dtype=float)
 
     # Plot density and LR
-    plot_kde_density_and_LR(scores, labels)
-
-
-if __name__== "__main__":
-    df = pd.read_csv(r'comparison_normalized.csv')
-    startup(df)
+    LR = plot_all(scores, labels)

@@ -57,10 +57,11 @@ def plot_all(scores, labels):
 
     # LR plot
     likelihood_ratios = id_density / ood_density
-    ax[1].plot(unique_scores, likelihood_ratios, color='b', label='Likelihood Ratio (KDE)')
+    ax[1].plot(unique_scores, likelihood_ratios, color='b', label='Log Likelihood Ratio (KDE)')
     ax[1].set_xlabel('Score')
-    ax[1].set_ylabel('Likelihood Ratio (LR)')
-    ax[1].set_title('Likelihood Ratio for Each Score (using KDE)')
+    ax[1].set_ylabel('Log Likelihood Ratio (LR)')
+    ax[1].set_yscale('log')
+    ax[1].set_title('Log Likelihood Ratio for Each Score (using KDE)')
     ax[1].legend(loc='upper right')
     ax[1].grid(True)
 

@@ -1,4 +1,4 @@
-# REQUIRED FILE: comparison_normalized.csv
+# REQUIRED FILE: test_results.csv
 
 import pandas as pd
 import numpy as np
@@ -135,7 +135,7 @@ def print_stats(df):
 
 
 if __name__== "__main__":
-    df = pd.read_csv(r'comparison_normalized.csv')
+    df = pd.read_csv(r'test_results.csv')
     df = startup(df)
     print_stats(df)
 

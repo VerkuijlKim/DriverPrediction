@@ -9,7 +9,7 @@ from sklearn.metrics import roc_curve, auc
 from lir.metrics import cllr
 
 
-def plot_all(scores, labels):
+def plot_all(scores, labels, log):
     """
     Plots density graph, LR and ROC curve
     """
@@ -55,13 +55,16 @@ def plot_all(scores, labels):
     # Give zero values a really small value (only for OOD because denominator)
     ood_density = np.clip(ood_density, 1e-6, None)
 
-    # LR plot
+    # Compute LR
     likelihood_ratios = id_density / ood_density
-    ax[1].plot(unique_scores, likelihood_ratios, color='b', label='Log Likelihood Ratio (KDE)')
+
+    # LR plot
+    ax[1].plot(unique_scores, likelihood_ratios, color='b', label=('Log ' if log else '') + 'Likelihood Ratio (KDE)')
     ax[1].set_xlabel('Score')
-    ax[1].set_ylabel('Log Likelihood Ratio (LR)')
-    ax[1].set_yscale('log')
-    ax[1].set_title('Log Likelihood Ratio for Each Score (using KDE)')
+    ax[1].set_ylabel('Log Likelihood Ratio' if log else 'Likelihood Ratio')
+    if log:
+        ax[1].set_yscale('log')
+    ax[1].set_title(('Log ' if log else '') + 'LR for each score (using KDE)')
     ax[1].legend(loc='upper right')
     ax[1].grid(True)
 
@@ -90,7 +93,6 @@ def startup(df):
     """
     Final implementation
     """
-
     # Startup animation
     print(
     r"""
@@ -104,21 +106,21 @@ def startup(df):
     """)
 
     model_choice = -1
+    id_choice = -1
+    ood_choice = -1
+    log_choice = -1
 
     while model_choice not in ['1', '2', '3']:
         model_choice = input("Welcome!\n"
                              "The dataset contains 10 drivers, were we have trained 3 models on a One-vs-One comparison,\n"
                              "where 1 driver is in-distribution and the other is out-of-distribution.\n"
-                             "Here you can see the specific performance metrics for a specific comparison!\n"
+                             "Here you can see the specific performance metrics for a specific comparison based on saved results!\n"
                         "Which model would you like to use?\n"
                         "1. One-class SVM\n"
                         "2. Isolation Forest\n"
                         "3. Local Outlier Factor\n"
                         "\x1b[1;32;40m" + "--> " + '\x1b[0m' + "Answer: "
                         )
-        
-    id_choice = -1
-    ood_choice = -1
 
     while id_choice not in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
         id_choice = input("What driver number (0-9) should be in-distribution?\n"
@@ -129,8 +131,14 @@ def startup(df):
                           "\x1b[1;32;40m" + "--> " + '\x1b[0m' + "Answer: ")
 
     if ood_choice == id_choice:
-        print("\x1b[1;31;40m" + "The in-distribution and out-of-distribution drivers cannot be the same." + '\x1b[0m')
-        return 0
+        raise ValueError("\x1b[1;31;40mThe in-distribution and out-of-distribution drivers cannot be the same.\x1b[0m") 
+    
+    while log_choice not in ['y', 'n']:
+        log_choice = input("Use Log Likelihood Ratio in plot [y/n]?\n"
+                          "\x1b[1;32;40m" + "--> " + '\x1b[0m' + "Answer: ")
+
+    # convert to bool    
+    log_choice = log_choice == 'y'
         
     match model_choice:
         case '1':
@@ -143,7 +151,7 @@ def startup(df):
     df = df[df['CLASS_ID'] == int(id_choice)]
     df = df.loc[df['CLASS_OOD'] == int(ood_choice)]
 
-    return df
+    return df, log_choice
 
 
 def print_stats(df):
@@ -153,7 +161,7 @@ def print_stats(df):
 
 if __name__== "__main__":
     df = pd.read_csv(r'test_results.csv')
-    df = startup(df)
+    df, log_choice = startup(df)
     print_stats(df)
 
     # Retrieve labels and scores
@@ -162,4 +170,5 @@ if __name__== "__main__":
     scores = np.array(df['AllScores'].iloc[0].strip("[]").split(), dtype=float)
 
     # Plot density and LR
-    LR = plot_all(scores, labels)
+    print(log_choice)
+    LR = plot_all(scores, labels, log_choice)

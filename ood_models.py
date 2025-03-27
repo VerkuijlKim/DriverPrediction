@@ -42,7 +42,7 @@ class IsolationForestModel():
         normalized_ood_scores = 1 - normalized_ood_scores
 
         scores = np.concatenate([normalized_id_scores, normalized_ood_scores])
-        labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])
+        labels = np.concatenate([np.zeros(len(id_scores)), np.ones(len(ood_scores))])   # 0 = inlier, 1 = outlier
         return scores, labels, all_scores
     
 

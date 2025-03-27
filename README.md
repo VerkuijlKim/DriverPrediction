@@ -28,3 +28,5 @@ Utility functions
 ### SimpleNN.py
 (Attempt, not a successful model)
 
+### notebooks/Method1_modelOnAllFeatures.ipynb
+The random forest model (trained on all classes, which was not the goal)

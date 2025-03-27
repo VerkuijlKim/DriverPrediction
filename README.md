@@ -25,5 +25,6 @@ Contains the One-class SVM, Local Outlier Factor and Isolation Forest Model.
 ### Functions(2).py and DataDefined(2).py
 Utility functions
 
-###
+### SimpleNN.py
+(Attempt, not a successful model)
 

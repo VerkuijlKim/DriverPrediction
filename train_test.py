@@ -17,6 +17,7 @@ def load_data():
     df = add_delta(df, delta_col)
     encoder = LabelEncoder()
     df['Class'] = encoder.fit_transform(df['Class'])
+    return df
 
 
 def train_test(df):

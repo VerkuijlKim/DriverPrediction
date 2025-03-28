@@ -1,6 +1,0 @@
-name: IsolationForest
-is_DL: False
-
-n_estimators: 100
-max_samples: 'auto'
-contamination: 'auto'

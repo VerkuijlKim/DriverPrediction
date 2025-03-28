@@ -5,7 +5,6 @@ irrelevant_col = ['Engine_soacking_time',              # Not representative of d
                   'Engine_torque_after_correction',    # Duplicate (sort of)
                  ]
 
-
 # Column names of all columns with only 1 value
 one_val_col = ['Filtered_Accelerator_Pedal_value', 
                'Inhibition_of_engine_fuel_cut_off', 
@@ -13,7 +12,6 @@ one_val_col = ['Filtered_Accelerator_Pedal_value',
                'Torque_scaling_factor(standardization)', 
                'Glow_plug_control_request'
                ]
-
 
 # Column names of columns with whole numbers, where numbers are more like categories
 categorical_col = ['Current_Gear', 
@@ -70,26 +68,10 @@ two_val_col = ['Engine_in_fuel_cut_off',
                'Clutch_operation_acknowledge'
                ] 
 
-
 # Columns where it is in our interest to take the difference
 delta_col = ['Steering_wheel_speed', 
              'Accelerator_Pedal_value', 
              'Vehicle_speed'
              ]
-
-
-# Features used for training and testing
-relevant_features = ['Accelerator_Pedal_value',
-                     'Vehicle_speed', 
-                     'Acceleration_speed_-_Longitudinal', 
-                     'Acceleration_speed_-_Lateral', 
-                     'Indication_of_brake_switch_ON/OFF',   # categorical
-                     'Steering_wheel_speed', 
-                     'Steering_wheel_angle', 
-                     'Master_cylinder_pressure', 
-                     'Fuel_consumption',
-                     'Flywheel_torque'
-                     ]
-
 
 target = ['Class']

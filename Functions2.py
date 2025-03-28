@@ -148,26 +148,6 @@ def split_train_test_ood_train1class(df, driver_nr_ood, driver_nr_train, frac):
 
 
 ###############################################################################
-# Models
-###############################################################################
-
-
-class TabularNN(nn.Module):
-    def __init__(self, input_dim):
-        super(TabularNN, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)  
-        self.fc2 = nn.Linear(64, 32)  
-        self.fc3 = nn.Linear(32, 10)   # Output layer: 10 classes
-        self.relu = nn.ReLU()
- 
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
-###############################################################################
 # Sliding windows functions
 ###############################################################################
 
@@ -243,6 +223,7 @@ def extract_features_from_window(df):
             features.append(np.mean(np.abs(df[column] - 1)))         
     
     return np.array(features)
+
 
 ###############################################################################
 # Evaluation functions
